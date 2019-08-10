@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<!-- saved from url=(0059)pages-recent.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="人脸识别签到_教师登录_近期缺席">
+    <meta name="author" content="Wentao Gao">
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/logo.png">
+    <title>人脸识别签到_教师登录_近期缺席</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <!-- Bootstrap Core CSS -->
+    <link href="assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- You can change the theme colors from here -->
+    <link href="css/colors/blue.css" id="theme" rel="stylesheet">
+
+    <script type="text/javascript">window.onload=function(){load_absent_info();}</script>
+    <script>
+        $(document).ready(function(){
+            $("#absent_table").on("click","#changeToAttend",function(){
+                var courseId = this.getAttribute("data-courseId");
+                var courseTime = this.getAttribute("data-courseTime");
+                var studentId = this.getAttribute("data-studentId");
+                $.post("http://localhost:8080/edit_attend",{
+                    courseId:courseId,
+                    courseTime:courseTime,
+                    studentId:studentId
+                },
+                function(data){
+                    if (data){
+                        alert("签到信息修改成功，重新登录后更新显示");
+                    }
+                });
+            });
+        });
+        /*
+        function participationChange(courseId, courseTime, studentId){
+            $.post("http://localhost:8080/edit_attend",{			//@post请求修改某条出勤记录
+                courseId:courseId,
+                courseTime:courseTime,
+                studentId:studentId
+            },
+            function(){
+                alert("签到信息修改成功，重新登录后显示");
+            });
+        }*/
+    </script>
+    <script>
+        function load_absent_info(){
+            var teacher_id = $.cookie("teacher_ID");
+            $.post("http://localhost:8080/select_teacher",		//@post教师号返回信息
+            {
+                id:teacher_id
+            },
+                function(data){
+                    var teacher_name = data.name;
+                    document.getElementById("welcome_msg").innerHTML=teacher_name;
+                    
+                    var html_table='';
+                    console.log(data.attendList)
+                    for(var i=0; i<data.attendList.length;i++){
+                        if(!data.attendList[i].attend){
+                            console.log(data.attendList[i]);
+                            html_table += `<tr>
+                                            <td>${data.attendList[i].studentId}</td>
+                                            <td>${data.attendList[i].studentName}</td>
+                                            <td>${data.attendList[i].courseName}</td>
+                                            <td>${data.attendList[i].courseTime}</td>
+                                            <td>
+                                                <div id="changeToAttend" data-courseId="${data.attendList[i].courseId}" data-courseTime="${data.attendList[i].courseTime}" data-studentId="${data.attendList[i].studentId}" class="btn btn-success">
+                                                    修改为出勤
+                                                </div>
+                                                <!--
+                                                <button id="changeToAttend" data-course="${data.attendList[i].courseId}" data-courseTime="${data.attendList[i].courseTime}" data-studentId="${data.attendList[i].studentId}">
+                                                    修改为出勤
+                                                </button>
+                                                -->
+                                            </td>
+                                        </tr>`
+                        }
+                    }
+                    document.getElementById("absent_table").innerHTML+=html_table;
+                }
+            );
+        }
+    </script>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body class="fix-header fix-sidebar card-no-border">
+    <!-- ============================================================== -->
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- ============================================================== -->
+    <div class="preloader" style="display: none;">
+        <svg class="circular" viewBox="25 25 50 50">
+            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"></circle> </svg>
+    </div>
+    <!-- ============================================================== -->
+    <!-- Main wrapper - style you can find in pages.scss -->
+    <!-- ============================================================== -->
+    <div id="main-wrapper">
+        <!-- ============================================================== -->
+        <!-- Topbar header - style you can find in pages.scss -->
+        <!-- ============================================================== -->
+        <header class="topbar" style="">
+            <nav class="navbar top-navbar navbar-toggleable-sm navbar-light">
+                <!-- ============================================================== -->
+                <!-- Logo -->
+                <!-- ============================================================== -->
+                <div class="navbar-header">
+                    <a class="nav-link dropdown-toggle text-muted waves-effect waves-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">人脸识别签到_教师登录</a>
+                </div>
+                <!--
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="teacher-index.html">
+                        <span>
+                            人脸识别签到_教师登录
+                        </span>
+                    </a>
+                </div>
+                -->
+                <!-- ============================================================== -->
+                <!-- End Logo -->
+                <!-- ============================================================== -->
+                <div class="navbar-collapse">
+                    <!-- ============================================================== -->
+                    <!-- toggle and nav items -->
+                    <!-- ============================================================== -->
+                    <ul class="navbar-nav mr-auto mt-md-0 ">
+                        <!-- This is  -->
+                        <li class="nav-item"> <a class="nav-link nav-toggler hidden-md-up text-muted waves-effect waves-dark" href="javascript:void(0)"><i class="ti-menu"></i></a> </li>
+                        <!--
+                        <li class="nav-item hidden-sm-down">
+                            <form class="app-search p-l-20">
+                                <input type="text" class="form-control" placeholder="Search for subject"> <a class="srh-btn"><i class="ti-search"></i></a>
+                            </form>
+                        </li>
+                        <li class="nav-item hidden-sm-down">
+                            <form class="app-search p-l-20">
+                                <input type="text" class="form-control" placeholder="Search for student"> <a class="srh-btn"><i class="ti-search"></i></a>
+                            </form>
+                        </li>
+                        -->
+                    </ul>
+                    <!-- ============================================================== -->
+                    <!-- User profile and search -->
+                    <!-- ============================================================== -->
+                    <ul class="navbar-nav my-lg-0">
+                        <li class="nav-item dropdown">
+                            <a id="welcome_msg" class="nav-link dropdown-toggle text-muted waves-effect waves-dark" href="teacher-index.html" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">XXX</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </header>
+        <!-- ============================================================== -->
+        <!-- End Topbar header -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Left Sidebar - style you can find in sidebar.scss  -->
+        <!-- ============================================================== -->
+        <aside class="left-sidebar">
+            <!-- Sidebar scroll-->
+            <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 100%;"><div class="scroll-sidebar" style="overflow: hidden; width: auto; height: 100%;">
+                <!-- Sidebar navigation-->
+                <nav class="sidebar-nav active">
+                    <ul id="sidebarnav" class="in">
+                        <li>
+                            <a href="teacher-index.html" class="waves-effect"><i class="fa fa-clock-o m-r-10" aria-hidden="true"></i>近期签到</a>
+                        </li>
+						<!--
+                        <li>
+                            <a href="pages-table.html" class="waves-effect "><i class="fa fa-table m-r-10" aria-hidden="true"></i>近期课程</a>
+                        </li>
+						-->
+						<li>
+                            <a href="teacher-profile.html" class="waves-effect"><i class="fa fa-user m-r-10" aria-hidden="true"></i>个人信息</a>
+                        </li>
+                        
+                        <li>
+                            <a href="teacher-contact_student.html" class="waves-effect"><i class="fa fa-font m-r-10" aria-hidden="true"></i>联系学生</a>
+                        </li>
+                        
+                    <li class="active">
+                            <a href="teacher-recent_absent.html" class="waves-effect active"><i class="fa fa-address-book-o m-r-10" aria-hidden="true"></i>近期缺席</a>
+                        </li></ul>
+                    <div class="text-center m-t-30">
+                        <a href="../login-teacher.html" class="btn btn-danger">退出登录</a>
+                    </div>
+                </nav>
+                <!-- End Sidebar navigation -->
+            </div><div class="slimScrollBar" style="background: rgb(220, 220, 220); width: 5px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; left: 1px; height: 549.666px;"></div><div class="slimScrollRail" style="width: 5px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; left: 1px;"></div></div>
+            <!-- End Sidebar scroll-->
+        </aside>
+        <!-- ============================================================== -->
+        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Page wrapper  -->
+        <!-- ============================================================== -->
+        <div class="page-wrapper" style="min-height: 540px;">
+            <!-- ============================================================== -->
+            <!-- Container fluid  -->
+            <!-- ============================================================== -->
+            <div class="container-fluid">
+                <!-- ============================================================== -->
+                <!-- Bread crumb and right sidebar toggle -->
+                <!-- ============================================================== -->
+                <div class="row page-titles">
+                    <div class="col-md-6 col-8 align-self-center">
+                        <h3 class="text-themecolor m-b-0 m-t-0">近期缺席</h3>
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="javascript:void(0)">Home</a></li>
+                            <li class="breadcrumb-item active">近期缺席</li>
+                        </ol>
+                    </div>
+                    
+                </div>
+                <!-- ============================================================== -->
+                <!-- End Bread crumb and right sidebar toggle -->
+                <!-- ============================================================== -->
+                <!-- ============================================================== -->
+                <!-- Start Page Content -->
+                <!-- ============================================================== -->
+                <!-- Row -->
+                
+                <!-- Row -->
+                <!-- Row -->
+                
+                <!-- Row -->
+                <!-- Row -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        
+                    <div class="card">
+                        <div class="card-block">
+                            <h4 class="card-title">近期缺席列表</h4>     
+                                <div class="table-responsive m-t-40">
+                                    <table class="table stylish-table">
+                                        <thead>
+                                            <tr>
+                                                <th>学号</th>
+                                                <th>姓名</th>
+                                                <th>课程</th>
+                                                <th>时间</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="absent_table">
+                                            <!--
+                                            <tr>
+                                                <td>516021910669</td>
+                                                <td>高文韬</td>
+                                                <td>XXXXX</td>
+                                                <td>20XX年X月X节次</td>
+                                                <td><button onclick="participation_check()">修改为出勤</button>
+                                                    <script>
+                                                        function participation_check(){
+                                                            var r=confirm("确定修改此出勤记录吗");
+                                                        }
+                                                    </script>
+                                                </td>
+                                            </tr>
+                                            -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div></div>
+                </div>
+                <!-- Row -->
+                <!-- Row -->
+                
+                <!-- Row -->
+                <!-- ============================================================== -->
+                <!-- End PAge Content -->
+                <!-- ============================================================== -->
+            </div>
+            <!-- ============================================================== -->
+            <!-- End Container fluid  -->
+            <!-- ============================================================== -->
+            <!-- ============================================================== -->
+            <!-- footer -->
+            <!-- ============================================================== -->
+            <footer class="footer text-center">
+                © 2019 Writed by Wentao Gao
+            </footer>
+            <!-- ============================================================== -->
+            <!-- End footer -->
+            <!-- ============================================================== -->
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Page wrapper  -->
+        <!-- ============================================================== -->
+    </div>
+    <!-- ============================================================== -->
+    <!-- End Wrapper -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- All Jquery -->
+    <!-- ============================================================== -->
+    <script src="assets/plugins/jquery/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <!-- Bootstrap tether Core JavaScript -->
+    <script src="assets/plugins/bootstrap/js/tether.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <!-- slimscrollbar scrollbar JavaScript -->
+    <script src="js/jquery.slimscroll.js"></script>
+    <!--Wave Effects -->
+    <script src="js/waves.js"></script>
+    <!--Menu sidebar -->
+    <script src="js/sidebarmenu.js"></script>
+    <!--stickey kit -->
+    <script src="assets/plugins/sticky-kit-master/dist/sticky-kit.min.js"></script>
+    <!--Custom JavaScript -->
+    <script src="js/custom.min.js"></script>
+    <!-- ============================================================== -->
+    <!-- This page plugins -->
+    <!-- ============================================================== -->
+    <!-- Flot Charts JavaScript -->
+    <script src="assets/plugins/flot/jquery.flot.js"></script>
+    <script src="assets/plugins/flot.tooltip/js/jquery.flot.tooltip.min.js"></script>
+    <script src="js/flot-data.js"></script><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div><div class="flotTip" style="position: absolute; left: 728px; top: 633px; display: none;"></div>
+    <!-- ============================================================== -->
+    <!-- Style switcher -->
+    <!-- ============================================================== -->
+    <script src="assets/plugins/styleswitcher/jQuery.style.switcher.js"></script>
+
+
+
+</body></html>

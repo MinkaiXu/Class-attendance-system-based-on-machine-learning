@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">课堂考勤</string>
+    <string name="title_activity_login">登录</string>
+    <string name="title_activity_result">识别结果</string>
+</resources>

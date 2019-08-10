@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<!-- saved from url=(0052)teacher-index.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="人脸识别签到_教师登录_index">
+    <meta name="author" content="Wentao Gao">
+    <!-- Favicon icon -->
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/images/logo.png">
+    <title>人脸识别签到_教师登录_index</title>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <!-- Bootstrap Core CSS -->
+    <link href="assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- You can change the theme colors from here -->
+    <link href="css/colors/blue.css" id="theme" rel="stylesheet">
+
+    <script>
+        //日期差函数
+        function DateDiff(sDate1, sDate2){
+            aDate = sDate1.split("-");
+            oDate1 = new Date(aDate[1]+'-'+aDate[2]+'-'+aDate[0]);
+            aDate = sDate2.split("-");
+            oDate2 = new Date(aDate[1]+'-'+aDate[2]+'-'+aDate[0]);
+            iDays=parseInt(Math.abs(oDate1-oDate2)/1000/60/60/24);
+            return iDays;
+        }
+    </script>
+    <script>
+        //显示近期出勤率表格
+        $(document).ready(function(){
+            $("#register_table").on("click","#showList", function(){
+                alert(this.getAttribute("data-absent"));
+            });
+        });
+    </script>
+    <script type="text/javascript"> window.onload=function(){load_teacher_info();} </script>
+    <script>
+        function load_teacher_info(){
+            var teacher_id = $.cookie("teacher_ID");
+            $.post("http://localhost:8080/select_teacher",		//@post请求提交教工号返回信息表
+            {
+                id:teacher_id
+            },
+                function(data){
+                    console.log(data);
+                    var teacher_name = data.name;
+                    var phone = data.phone;
+                    var mail = data.mail;
+                    var total_rate;
+                    var week_rate;
+                    //获取当前日期 "2019-5-28"格式
+                    var date = new Date();
+                    var local_date = date.getFullYear()+"-"+(date.getMonth()+1)+"-"+date.getDate();
+
+                    //右上角欢迎信息
+                    document.getElementById("welcome_msg").innerHTML=teacher_name;
+
+                    //签到率卡片
+                    var register_count=0; //学期已签到数
+                    var total_count=0;  //学期应签到数
+                    var week_register_count=0;  //本周已签到数
+                    var week_total_count=0; //本周应签到数
+                    for(var i=0; i<data.attendList.length;i++){
+                        var date_diff = DateDiff(local_date, data.attendList[i].courseTime);
+                        if(data.attendList[i].attend){
+                            register_count++;
+                            if (date_diff<7){
+                                week_register_count++;
+                            }
+                        }
+                        total_count++;
+                        if(date_diff<7){
+                            week_total_count++;
+                        }
+                    }
+                    total_rate=register_count/total_count*100;
+                    var temp = parseFloat(total_rate);
+                    temp = Math.round(total_rate*100)/100;
+                    total_rate=temp;
+                    week_rate=week_register_count/week_total_count*100;
+                    temp = Math.round(week_rate*100)/100;
+                    week_rate=temp;
+                    if(register_count==0&&total_count==0){
+                        total_rate=0;
+                    }
+                    if(week_register_count==0&&week_total_count==0){
+                        week_rate=0;
+                    }
+                    document.getElementById("register_count").innerHTML="实际到课"+register_count+"人次";
+                    document.getElementById("total_count").innerHTML="应到"+total_count+"人次";
+                    document.getElementById("total_rate").innerHTML=total_rate+"%";
+                    document.getElementById("total_process_bar").style.width=total_rate+"%";
+                    document.getElementById("week_register_count").innerHTML="实际到课"+week_register_count+"次";
+                    document.getElementById("total_register_count").innerHTML="本周已签到"+week_total_count+"次";
+                    document.getElementById("week_rate").innerHTML=week_rate+"%";
+                    document.getElementById("week_process_bar").style.width=week_rate+"%";
+                    
+					//近期课程签到表
+                    var class_ID_list = new Array();    
+                    var class_Name_list = new Array();
+                    var class_Time_list = new Array();
+                    var true_list = new Array();
+                    var total_list = new Array();
+                    var absent_list = new Array();
+                    console.log(data.attendList.length);
+                    
+                    for (var i=0; i<data.attendList.length;i++) {
+                        if (class_ID_list.length==0){ //首条信息
+                            class_ID_list.push(data.attendList[i].courseId);
+                            class_Name_list.push(data.attendList[i].courseName);
+                            class_Time_list.push(data.attendList[i].courseTime);
+                            if (data.attendList[i].attend==true){
+                                true_list.push(1);
+                                absent_list.push('');
+                            }
+                            else{
+                                true_list.push(0);
+                                absent_list.push(data.attendList[i].studentName+'\n');
+                            }
+                            total_list.push(1);
+                        }
+                        else{ //后续消息
+                            var flag = false;
+                            for (var j=0; j<class_ID_list.length;j++){  //判断是否在已有列表中
+                                if (class_ID_list[j] == data.attendList[i].courseId && class_Time_list[j] == data.attendList[i].courseTime){ //已存在
+                                    flag = true;
+                                    break;
+                                }
+                            }
+                            if(flag){        //在列表中
+                                if (data.attendList[i].attend==true){
+                                    true_list[j]++;
+                                }
+                                else{
+                                    absent_list[j] += data.attendList[i].studentName+'\n';
+                                }
+                                total_list[j]++;
+                            }
+                            else {           //不在列表中
+                                class_ID_list.push(data.attendList[i].courseId);
+                                class_Name_list.push(data.attendList[i].courseName);
+                                class_Time_list.push(data.attendList[i].courseTime);
+                                if (data.attendList[i].attend==true){
+                                    true_list.push(1);
+                                    absent_list.push('');
+                                }
+                                else{
+                                    true_list.push(0);
+                                    absent_list.push(data.attendList[i].studentName+'\n');
+                                }
+                                total_list.push(1);
+                            }
+                        }
+                    }
+                    console.log(class_ID_list);
+                    console.log(class_Name_list);
+                    console.log(class_Time_list);
+                    console.log(true_list);
+                    console.log(total_list);
+                    console.log(absent_list);
+                    
+                    var html_table='';
+                    for (var i=0; i<class_ID_list.length; i++) {
+                        var attend_rate=Math.round(true_list[i]/total_list[i]*10000)/100;
+                        attend_rate=attend_rate+"%";
+                        html_table += `<tr>
+                                    <td>${class_ID_list[i]}</td>
+                                    <td><h6>${class_Name_list[i]}</h6></td>
+                                    <td>${class_Time_list[i]}</td>
+                                    <td>${total_list[i]}</td>
+                                    <td>${true_list[i]}</td>
+                                    <td>${attend_rate}</td>
+                                    <td>
+                                        <div id="showList" data-absent="${absent_list[i]}" class="btn btn-success">查看缺席名单</div>
+                                        <!--<button id="showList" data-absent="${absent_list[i]}">查看名单</button>-->
+                                    </td>
+                                    </tr>`
+                    }
+                    document.getElementById("register_table").innerHTML = html_table;
+                }
+            );
+        }
+    </script>
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+    <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+<![endif]-->
+</head>
+
+<body class="fix-header fix-sidebar card-no-border">
+    <!-- ============================================================== -->
+    <!-- Preloader - style you can find in spinners.css -->
+    <!-- ============================================================== -->
+    <div class="preloader" style="display: none;">
+        <svg class="circular" viewBox="25 25 50 50">
+            <circle class="path" cx="50" cy="50" r="20" fill="none" stroke-width="2" stroke-miterlimit="10"></circle> </svg>
+    </div>
+    <!-- ============================================================== -->
+    <!-- Main wrapper - style you can find in pages.scss -->
+    <!-- ============================================================== -->
+    <div id="main-wrapper">
+        <!-- ============================================================== -->
+        <!-- Topbar header - style you can find in pages.scss -->
+        <!-- ============================================================== -->
+        <header class="topbar" style="">
+            <nav class="navbar top-navbar navbar-toggleable-sm navbar-light">
+                <!-- ============================================================== -->
+                <!-- Logo -->
+                <!-- ============================================================== -->
+                <div class="navbar-header">
+                    <a class="nav-link dropdown-toggle text-muted waves-effect waves-dark" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">人脸识别签到_教师登录</a>
+                </div>
+                <!--
+                <div class="navbar-header">
+                    <a class="navbar-brand" href="teacher-index.html">
+                        <span>
+                            人脸识别签到_教师登录
+                        </span>
+                    </a>
+                </div>
+                -->
+                <!-- ============================================================== -->
+                <!-- End Logo -->
+                <!-- ============================================================== -->
+                <div class="navbar-collapse">
+                    <!-- ============================================================== -->
+                    <!-- toggle and nav items -->
+                    <!-- ============================================================== -->
+                    <ul class="navbar-nav mr-auto mt-md-0 ">
+                        <!-- This is  -->
+                        <li class="nav-item"> <a class="nav-link nav-toggler hidden-md-up text-muted waves-effect waves-dark" href="javascript:void(0)"><i class="ti-menu"></i></a> </li>
+                        <!--
+                        <li class="nav-item hidden-sm-down">
+                            <form class="app-search p-l-20">
+                                <input type="text" class="form-control" placeholder="Search for subject"> <a class="srh-btn"><i class="ti-search"></i></a>
+                            </form>
+                        </li>
+                        <li class="nav-item hidden-sm-down">
+                            <form class="app-search p-l-20">
+                                <input type="text" class="form-control" placeholder="Search for student"> <a class="srh-btn"><i class="ti-search"></i></a>
+                            </form>
+                        </li>
+                        -->
+                    </ul>
+                    <!-- ============================================================== -->
+                    <!-- User profile and search -->
+                    <!-- ============================================================== -->
+                    <ul class="navbar-nav my-lg-0">
+                        <li class="nav-item dropdown">
+                            <a id="welcome_msg" class="nav-link dropdown-toggle text-muted waves-effect waves-dark" href="teacher-index.html" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">XXX</a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+        </header><div style="position: fixed; width: 1263.33px; height: 70px; display: block; vertical-align: baseline; float: none;"></div><div style="position: fixed; width: 1263.33px; height: 70px; display: block; vertical-align: baseline; float: none;"></div>
+        <!-- ============================================================== -->
+        <!-- End Topbar header -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Left Sidebar - style you can find in sidebar.scss  -->
+        <!-- ============================================================== -->
+        <aside class="left-sidebar">
+            <!-- Sidebar scroll-->
+            <div class="slimScrollDiv" style="position: relative; overflow: hidden; width: auto; height: 100%;"><div class="scroll-sidebar" style="overflow: hidden; width: auto; height: 100%;">
+                <!-- Sidebar navigation-->
+                <nav class="sidebar-nav active">
+                    <ul id="sidebarnav" class="in">
+                        <li class="active">
+                            <a href="teacher-index.html" class="waves-effect active"><i class="fa fa-clock-o m-r-10" aria-hidden="true"></i>
+                                近期签到
+                            </a>
+                        </li>
+                        <!--
+                        <li>
+                            <a href="teacher-recent_course.html" class="waves-effect"><i class="fa fa-table m-r-10" aria-hidden="true"></i>近期课程</a>
+                        </li>
+                        -->
+                        <li>
+                            <a href="teacher-profile.html" class="waves-effect"><i class="fa fa-user m-r-10" aria-hidden="true"></i>个人信息</a>
+                        </li>
+                        <li>
+                            <a href="teacher-contact_student.html" class="waves-effect"><i class="fa fa-font m-r-10" aria-hidden="true"></i>联系学生</a>
+                        </li>
+                        <li>
+                            <a href="teacher-recent_absent.html" class="waves-effect"><i class="fa fa-address-book-o m-r-10" aria-hidden="true"></i>近期缺席</a>
+                        </li>
+                    </ul>
+                    <div class="text-center m-t-30">
+                        <a href="../login-teacher.html" class="btn btn-danger">退出登录</a>
+                    </div>
+                </nav>
+                <!-- End Sidebar navigation -->
+            </div><div class="slimScrollBar" style="background: rgb(220, 220, 220); width: 5px; position: absolute; top: 0px; opacity: 0.4; display: none; border-radius: 7px; z-index: 99; left: 1px; height: 549.666px;"></div><div class="slimScrollRail" style="width: 5px; height: 100%; position: absolute; top: 0px; display: none; border-radius: 7px; background: rgb(51, 51, 51); opacity: 0.2; z-index: 90; left: 1px;"></div></div>
+            <!-- End Sidebar scroll-->
+        </aside>
+        <!-- ============================================================== -->
+        <!-- End Left Sidebar - style you can find in sidebar.scss  -->
+        <!-- ============================================================== -->
+        <!-- ============================================================== -->
+        <!-- Page wrapper  -->
+        <!-- ============================================================== -->
+        <div class="page-wrapper" style="min-height: 548px;">
+            <!-- ============================================================== -->
+            <!-- Container fluid  -->
+            <!-- ============================================================== -->
+            <div class="container-fluid">
+                <!-- ============================================================== -->
+                <!-- Bread crumb and right sidebar toggle -->
+                <!-- ============================================================== -->
+                <div class="row page-titles">
+                    <div class="col-md-6 col-8 align-self-center">
+                        <h3 class="text-themecolor m-b-0 m-t-0">近期签到</h3>
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="javascript:void(0)">Home</a></li>
+                            <li class="breadcrumb-item active">近期签到</li>
+                        </ol>
+                    </div>
+					<!--
+                    <div class="col-md-6 col-4 align-self-center">
+                        <a href="teacher-index.html" class="btn pull-right hidden-sm-down btn-success">刷新</a>
+                    </div>
+					-->
+                </div>
+                <!-- ============================================================== -->
+                <!-- End Bread crumb and right sidebar toggle -->
+                <!-- ============================================================== -->
+                <!-- ============================================================== -->
+                <!-- Start Page Content -->
+                <!-- ============================================================== -->
+                <!-- Row -->
+                <div class="row">
+                    <!-- Column -->
+                    <div class="col-sm-6">
+                        <div class="card">
+                            <div class="card-block">
+                                <h4 class="card-title">本学期学生总到课率</h4>
+                                <div class="text-right">
+                                    <h2 id="register_count" class="font-light m-b-0">实际到课X人次</h2>
+                                    <span id="total_count" class="text-muted">应到X人次</span>
+                                </div>
+                                <span id="total_rate" class="text-success">X%</span>
+                                <div class="progress">
+                                    <div id="total_process_bar" class="progress-bar bg-success" role="progressbar" style="width: 40%; height: 6px;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column -->
+                    <!-- Column -->
+                    <div class="col-sm-6">
+                        <div class="card">
+                            <div class="card-block">
+                                <h4 class="card-title">本周学生到课率</h4>
+                                <div class="text-right">
+                                    <h2 id="week_register_count" class="font-light m-b-0">实际到课X人次</h2>
+                                    <span id="total_register_count" class="text-muted">应到X人次</span>
+                                </div>
+                                <span id="week_rate" class="text-info">X%</span>
+                                <div class="progress">
+                                    <div id="week_process_bar" class="progress-bar bg-info" role="progressbar" style="width: 30%; height: 6px;" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Column -->
+                </div>
+                <!-- Row -->
+                <!-- Row -->
+                <div class="row">
+                    <!-- column -->
+                    <div class="col-sm-12">
+                        <div class="card">
+                            
+                        </div>
+                    </div>
+                    <!-- column -->
+                </div>
+                <!-- Row -->
+                <!-- Row -->
+                <div class="row">
+                    <div class="col-sm-12">
+                        <div class="card">
+                            <div class="card-block">
+								<!--
+                                <select class="custom-select pull-right">
+                                    <option selected="">本周</option>
+                                    <option value="1">一周前</option>
+                                    <option value="2">两周前</option>
+                                    <option value="3">三周前</option>
+                                </select>
+								-->
+                                <h4 class="card-title">本周</h4><h4 class="card-title">签到详情</h4>
+                                <div class="table-responsive m-t-40">
+                                    <table class="table stylish-table">
+                                        <thead>
+                                            <tr>
+                                                <th>课程号</th>
+                                                <th>课程名</th>
+                                                <th>时间</th>
+                                                <th>应到人数</th>
+                                                <th>实到人数</th><th colspan="1">到课率</th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        
+                                        <tbody id="register_table">
+                                            <!--
+                                            <tr>
+                                                <td>IS123</td>
+                                                <td><h6>应用软件课程设计</h6><small class="text-muted">东上院_502</small></td>
+                                                <td>2019年5月9日8时</td>
+                                                <td>X</td>
+                                                <td>X</td>
+                                                <td>X%</td>
+                                                <td><button onclick="show_absent_student()">查看缺席名单</button>
+                                                    <script>
+                                                        function show_absent_student(){
+                                                            alert("XXX\nXXX\nXXX");
+                                                        }
+                                                    </script>
+                                                </td>
+                                            </tr>
+                                            -->
+                                        </tbody>
+                                        
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Row -->
+                <!-- Row -->
+                
+                <!-- Row -->
+                <!-- ============================================================== -->
+                <!-- End PAge Content -->
+                <!-- ============================================================== -->
+            </div>
+            <!-- ============================================================== -->
+            <!-- End Container fluid  -->
+            <!-- ============================================================== -->
+            <!-- ============================================================== -->
+            <!-- footer -->
+            <!-- ============================================================== -->
+            <footer class="footer text-center">
+                © 2019 Writed by Wentao Gao
+            </footer>
+            <!-- ============================================================== -->
+            <!-- End footer -->
+            <!-- ============================================================== -->
+        </div>
+        <!-- ============================================================== -->
+        <!-- End Page wrapper  -->
+        <!-- ============================================================== -->
+    </div>
+    <!-- ============================================================== -->
+    <!-- End Wrapper -->
+    <!-- ============================================================== -->
+    <!-- ============================================================== -->
+    <!-- All Jquery -->
+    <!-- ============================================================== -->
+    <script src="assets/plugins/jquery/jquery.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+    <!-- Bootstrap tether Core JavaScript -->
+    <script src="assets/plugins/bootstrap/js/tether.min.js"></script>
+    <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+    <!-- slimscrollbar scrollbar JavaScript -->
+    <script src="js/jquery.slimscroll.js"></script>
+    <!--Wave Effects -->
+    <script src="js/waves.js"></script>
+    <!--Menu sidebar -->
+    <script src="js/sidebarmenu.js"></script>
+    <!--stickey kit -->
+    <script src="assets/plugins/sticky-kit-master/dist/sticky-kit.min.js"></script>
+    <!--Custom JavaScript -->
+    <script src="js/custom.min.js"></script>
+    <!-- ============================================================== -->
+    <!-- This page plugins -->
+    <!-- ============================================================== -->
+    <!-- Flot Charts JavaScript -->
+    <script src="assets/plugins/flot/jquery.flot.js"></script>
+    <script src="assets/plugins/flot.tooltip/js/jquery.flot.tooltip.min.js"></script>
+    <script src="js/flot-data.js"></script><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="display: none; position: absolute;"></div><div class="flotTip" style="position: absolute; left: 370px; top: 518px; display: none;"></div>
+    <!-- ============================================================== -->
+    <!-- Style switcher -->
+    <!-- ============================================================== -->
+    <script src="assets/plugins/styleswitcher/jQuery.style.switcher.js"></script>
+
+
+
+</body></html>
